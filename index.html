@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asymmetrische Verschlüsselung — Schlüssel als Merkwörter</title>
+<style>
+  :root{
+    --paper:#EDF0F4; --card:#FFF; --ink:#17212E; --muted:#5B6B7C; --line:#D4DAE3;
+    --pub:#1F5FA8; --pub-bg:#EDF4FB; --priv:#9E2B25; --priv-bg:#FBEFEE;
+    --ok:#1E7B4F; --err:#9E2B25;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--paper)}
+  body{font-family:var(--sans);color:var(--ink);max-width:760px;margin:0 auto;
+    padding:36px 18px 70px;line-height:1.5;font-size:15px}
+  header{margin-bottom:28px;border-bottom:2px solid var(--ink);padding-bottom:16px}
+  h1{font-size:24px;letter-spacing:-0.02em}
+  header p{color:var(--muted);margin-top:5px;font-size:14px;max-width:64ch}
+  .spec{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:8px;
+    display:inline-block;border:1px solid var(--line);background:var(--card);
+    padding:2px 8px;border-radius:3px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:22px;margin-bottom:20px}
+  h2{font-size:16px;margin-bottom:3px}
+  p.hint{color:var(--muted);font-size:13px;margin-bottom:14px;max-width:66ch}
+  label{display:block;font-size:12px;font-weight:600;margin:13px 0 5px;
+    text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  input[type=text],textarea{width:100%;font-family:var(--mono);font-size:12.5px;
+    line-height:1.5;border:1px solid var(--line);border-radius:5px;padding:9px 10px;
+    background:#FAFBFC;color:var(--ink)}
+  textarea{min-height:88px;resize:vertical}
+  textarea.msg{font-family:var(--sans);font-size:14px}
+  input:focus-visible,textarea:focus-visible,button:focus-visible{
+    outline:2px solid var(--pub);outline-offset:2px}
+  .row{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px;align-items:center}
+  .inline{display:flex;gap:7px;align-items:stretch}
+  .inline input{flex:1;min-width:0}
+  button{font-family:var(--sans);font-size:14px;font-weight:600;border:1px solid var(--ink);
+    background:var(--ink);color:#fff;padding:9px 18px;border-radius:5px;cursor:pointer;
+    white-space:nowrap}
+  button:hover{background:#2A3B52}
+  button.secondary{background:transparent;color:var(--ink)}
+  button.secondary:hover{background:#EEF1F5}
+  button.small{font-size:12.5px;padding:6px 12px;font-weight:500}
+  button:disabled{opacity:.45;cursor:default}
+  .pubband{border-left:4px solid var(--pub);background:var(--pub-bg);border-radius:5px;
+    padding:12px 14px;margin-top:14px}
+  .pubband .t{font-size:12.5px;font-weight:700;color:var(--pub);margin-bottom:6px}
+  .privband{border-left:4px solid var(--priv);background:var(--priv-bg);border-radius:5px;
+    padding:12px 14px;margin-top:12px}
+  .privband .t{font-size:12.5px;font-weight:700;color:var(--priv);margin-bottom:6px}
+  .words{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .words span{font-family:var(--mono);font-size:13px;background:#fff;
+    border:1px solid #E8C7C4;border-radius:4px;padding:3px 9px}
+  .words span i{font-style:normal;color:var(--muted);font-size:10px;margin-right:5px}
+  .words span.check{border-style:dashed}
+  .fp{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:7px;
+    word-break:break-all}
+  .fp b{color:var(--ink)}
+  .status{font-size:13px;margin-top:11px;min-height:1.4em}
+  .status.ok{color:var(--ok)} .status.err{color:var(--err)}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px}
+  details summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--priv)}
+  details[open] summary{margin-bottom:7px}
+  footer{font-size:12px;color:var(--muted);max-width:66ch}
+  footer code{font-family:var(--mono);font-size:11px}
+  @media (max-width:540px){body{padding:20px 10px 50px}section{padding:15px}
+    .inline{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Asymmetrische Verschlüsselung — Merkwörter</h1>
+  <p>Der private Schlüssel besteht aus 16 Wörtern plus einem Prüfwort. Aufschreiben genügt als Sicherung — aus den Wörtern wird das komplette Schlüsselpaar auf jedem Gerät identisch wiederhergestellt. Alles läuft lokal, nichts wird übertragen.</p>
+  <span class="spec">Merkwörter → HKDF → ECDH P-256 · AES-256-GCM</span>
+</header>
+
+<!-- ── Dein Schlüssel ── -->
+<section>
+  <h2>Dein Schlüssel</h2>
+  <p class="hint">Wird beim Öffnen automatisch erzeugt. Weitergeben: die blaue Zeile. Sichern: die roten Wörter auf Papier.</p>
+
+  <div class="pubband">
+    <div class="t">Öffentlicher Schlüssel — weitergeben</div>
+    <div class="inline">
+      <input type="text" id="inPub" spellcheck="false" readonly>
+      <button class="small secondary" id="btnCopyPub">Kopieren</button>
+    </div>
+    <div class="fp" id="fpOwn">Fingerabdruck: —</div>
+  </div>
+
+  <div class="privband">
+    <div class="t">Private Merkwörter — geheim halten</div>
+    <details id="detWords">
+      <summary>Anzeigen (17 Wörter, das letzte ist das Prüfwort)</summary>
+      <div class="words" id="wordBox"></div>
+      <div class="row">
+        <button class="small secondary" id="btnCopyWords">Wörter kopieren</button>
+      </div>
+      <div id="wordsManual" style="display:none">
+        <label for="taWordsPlain">Kopieren blockiert — Text hier manuell markieren (Strg/Cmd+C)</label>
+        <textarea id="taWordsPlain" spellcheck="false" readonly style="min-height:56px"></textarea>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Wer diese Wörter kennt, kann alle deine Nachrichten entschlüsseln. Am besten auf Papier, nicht als Datei.</p>
+    </details>
+  </div>
+
+  <div class="row">
+    <button class="secondary" id="btnNew">Neuen Schlüssel erzeugen</button>
+    <button class="secondary" id="btnRestore">Merkwörter eingeben</button>
+  </div>
+  <div id="restoreBox" style="display:none">
+    <label for="taRestore">17 Merkwörter (Reihenfolge beachten, Groß-/Kleinschreibung egal)</label>
+    <textarea id="taRestore" spellcheck="false" placeholder="adler ampel anker …"></textarea>
+    <div class="row"><button class="small" id="btnRestoreGo">Schlüssel wiederherstellen</button></div>
+  </div>
+  <div class="status" id="stKeys"></div>
+</section>
+
+<!-- ── Verschlüsseln ── -->
+<section>
+  <h2>Nachricht verschlüsseln</h2>
+  <p class="hint">Öffentlichen Schlüssel des Empfängers einfügen, Nachricht schreiben. Das Ergebnis landet automatisch in der Zwischenablage.</p>
+
+  <label for="inRecipient">Öffentlicher Schlüssel des Empfängers</label>
+  <div class="inline">
+    <input type="text" id="inRecipient" spellcheck="false" placeholder="88-Zeichen-Zeile des Empfängers …">
+    <button class="small secondary" id="btnSelf" title="An dich selbst — zum Testen">An mich selbst</button>
+  </div>
+  <div class="fp" id="fpRecipient"></div>
+
+  <label for="taPlain">Nachricht</label>
+  <textarea id="taPlain" class="msg" placeholder="Zu verschlüsselnder Text …"></textarea>
+
+  <div class="row"><button id="btnEnc">Verschlüsseln &amp; kopieren</button></div>
+  <div class="status" id="stEnc"></div>
+
+  <textarea id="taCipher" spellcheck="false" readonly style="display:none"></textarea>
+  <div class="meta" id="metaEnc"></div>
+</section>
+
+<!-- ── Entschlüsseln ── -->
+<section>
+  <h2>Nachricht entschlüsseln</h2>
+  <p class="hint">Empfangene verschlüsselte Nachricht einfügen — entschlüsselt wird mit deinem Schlüssel von oben.</p>
+
+  <label for="taIn">Verschlüsselte Nachricht</label>
+  <textarea id="taIn" spellcheck="false" placeholder="Hier einfügen …"></textarea>
+
+  <div class="row"><button id="btnDec">Entschlüsseln</button></div>
+  <div class="status" id="stDec"></div>
+
+  <label for="taOut" id="lblOut" style="display:none">Klartext</label>
+  <textarea id="taOut" class="msg" readonly style="display:none"></textarea>
+</section>
+
+<footer>
+  Ableitung: 16 Wörter kodieren 128 Bit Zufall (eigene 256er-Wortliste, <b>nicht</b> BIP39-kompatibel); Wort 17 ist eine Prüfsumme gegen Schreibfehler. Daraus per HKDF-SHA-256 der private P-256-Skalar, der öffentliche Punkt wird lokal berechnet. Nachrichten: ECIES-Schema, Container <code>Base64( version ‖ ephemerer Pubkey ‖ Nonce ‖ Chiffrat+Tag )</code>, 94 Bytes Overhead. Kompatibel mit sich selbst auf allen Geräten, nicht mit PGP/age.
+</footer>
+
+<script>
+"use strict";
+(() => {
+  const $ = id => document.getElementById(id);
+  const te = new TextEncoder(), td = new TextDecoder();
+  const EC = { name: "ECDH", namedCurve: "P-256" };
+  const VERSION = 1;
+  let own = null; // { privateKey, publicKey, words }
+
+  // ================= Wortliste: exakt 256 eindeutige Wörter (8 Bit pro Wort) =================
+  const WORDS = (
+    "adler ampel anker apfel arzt ast auge axt bach ball band bank bart baum beere berg " +
+    "besen bett biene bild birne blatt blitz blume boden bogen boot brief brille brot bruecke brunnen " +
+    "buch burg bus butter dach dampf daumen decke delfin diamant dorf drache draht eiche eimer eis " +
+    "elch ente erbse erde esel essig eule faden fahne falke farbe fass feder feld fels fenster " +
+    "feuer fisch flagge flamme flasche fluss forelle frosch fuchs funke gabel gans garten gast geige gitter " +
+    "glas glocke gold gras gurke gurt haar hafen hahn hase haut hebel hecke heft herd herz " +
+    "himmel hirsch hobel honig hose hotel huhn hund hut igel insel jacke jagd jahr kabel kaffee " +
+    "kamm kanne karte kater kegel kerze kette kiesel kind kirsche kiste klee knopf koch kohle komet " +
+    "kompass korb kran kranz kreide kreis krone kuchen kugel kuh kupfer lampe land laterne laub leder " +
+    "lehm leiter licht lilie linse loewe lupe magnet mais mantel marmor maske matte mauer maus meer " +
+    "mehl messer metall milch mond moos motor muehle muenze mund muschel nadel nagel nase nebel nest " +
+    "netz nord nudel nuss ofen ohr onkel oper orgel ost otter palme papier pfau pfeil pferd " +
+    "pilz pinsel platz pumpe puppe quark quelle rabe rad rahmen rakete rampe rasen ratte regal regen " +
+    "reis riegel ring rose rost ruder sack saft salat salz samt sand schaf schiff schnee schuh " +
+    "see segel seife seil sessel sieb silber sofa sonne spaten spiegel spinne stein stern stuhl sturm " +
+    "tafel tal tanne tasse taube teich teller tiger tinte tisch topf tor traube turm vogel wald"
+  ).split(" ");
+
+  // ================= P-256-Kurvenarithmetik (BigInt, Jacobi-Koordinaten) =================
+  // Nur nötig, um aus dem abgeleiteten Skalar den öffentlichen Punkt zu berechnen —
+  // Web Crypto kann EC-Privatschlüssel nicht ohne Punktkoordinaten importieren.
+  const P  = 2n**256n - 2n**224n + 2n**192n + 2n**96n - 1n;
+  const A  = P - 3n;
+  const N  = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
+  const GX = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296n;
+  const GY = 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5n;
+
+  const mod = (a, m = P) => ((a % m) + m) % m;
+  const modpow = (b, e, m) => {
+    let r = 1n; b = mod(b, m);
+    while (e > 0n) { if (e & 1n) r = r * b % m; b = b * b % m; e >>= 1n; }
+    return r;
+  };
+  const inv = x => modpow(x, P - 2n, P);
+
+  const dbl = pt => {
+    if (!pt) return null;
+    const { x, y, z } = pt;
+    if (y === 0n) return null;
+    const y2 = mod(y * y), s = mod(4n * x * y2);
+    const z2 = mod(z * z), z4 = mod(z2 * z2);
+    const m = mod(3n * x * x + A * z4);
+    const x3 = mod(m * m - 2n * s);
+    const y3 = mod(m * (s - x3) - 8n * y2 * y2);
+    const z3 = mod(2n * y * z);
+    return { x: x3, y: y3, z: z3 };
+  };
+
+  const add = (p, q) => {
+    if (!p) return q; if (!q) return p;
+    const z1z1 = mod(p.z * p.z), z2z2 = mod(q.z * q.z);
+    const u1 = mod(p.x * z2z2), u2 = mod(q.x * z1z1);
+    const s1 = mod(p.y * z2z2 * q.z), s2 = mod(q.y * z1z1 * p.z);
+    const h = mod(u2 - u1), r = mod(s2 - s1);
+    if (h === 0n) return r === 0n ? dbl(p) : null;
+    const h2 = mod(h * h), h3 = mod(h * h2), u1h2 = mod(u1 * h2);
+    const x3 = mod(r * r - h3 - 2n * u1h2);
+    const y3 = mod(r * (u1h2 - x3) - s1 * h3);
+    const z3 = mod(h * p.z * q.z);
+    return { x: x3, y: y3, z: z3 };
+  };
+
+  const mul = (k, pt) => {
+    let res = null, addend = pt;
+    while (k > 0n) {
+      if (k & 1n) res = add(res, addend);
+      addend = dbl(addend);
+      k >>= 1n;
+    }
+    return res;
+  };
+
+  // ================= Byte-/Base64-Helfer =================
+  const toB64 = buf => {
+    const b = new Uint8Array(buf); let s = "";
+    for (let i = 0; i < b.length; i += 0x8000)
+      s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  const fromB64 = b64 => {
+    const bin = atob(b64.replace(/\s+/g, ""));
+    const b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  };
+  const b64u = bytes => toB64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const bigToBytes = (n, len = 32) => {
+    const out = new Uint8Array(len);
+    for (let i = len - 1; i >= 0; i--) { out[i] = Number(n & 0xffn); n >>= 8n; }
+    return out;
+  };
+  const bytesToBig = bytes => {
+    let n = 0n;
+    for (const b of bytes) n = (n << 8n) | BigInt(b);
+    return n;
+  };
+
+  // ================= Merkwörter ↔ Seed =================
+  const seedToWords = async seed => {
+    const idx = Array.from(seed);
+    const chk = new Uint8Array(await crypto.subtle.digest("SHA-256", seed))[0];
+    return idx.concat([chk]).map(i => WORDS[i]);
+  };
+  const wordsToSeed = async text => {
+    const parts = text.toLowerCase().trim().split(/[\s,;]+/).filter(Boolean);
+    if (parts.length !== 17)
+      throw new Error("Es müssen genau 17 Wörter sein — eingegeben: " + parts.length + ".");
+    const idx = parts.map(w => {
+      const i = WORDS.indexOf(w);
+      if (i < 0) throw new Error("Unbekanntes Wort: „" + w + "“ — Tippfehler?");
+      return i;
+    });
+    const seed = new Uint8Array(idx.slice(0, 16));
+    const chk = new Uint8Array(await crypto.subtle.digest("SHA-256", seed))[0];
+    if (chk !== idx[16])
+      throw new Error("Prüfwort passt nicht — mindestens ein Wort ist falsch oder vertauscht.");
+    return seed;
+  };
+
+  // ================= Seed → Schlüsselpaar (deterministisch) =================
+  const keyFromSeed = async seed => {
+    // 128-Bit-Seed → 256-Bit-Skalar via HKDF
+    const hk = await crypto.subtle.importKey("raw", seed, "HKDF", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits(
+      { name: "HKDF", hash: "SHA-256", salt: new Uint8Array(32),
+        info: te.encode("p256-mnemonic-scalar-v1") }, hk, 256);
+    const d = mod(bytesToBig(new Uint8Array(bits)), N - 1n) + 1n;
+
+    // Öffentlichen Punkt d·G berechnen
+    const pub = mul(d, { x: GX, y: GY, z: 1n });
+    const zi = inv(pub.z), zi2 = mod(zi * zi);
+    const px = mod(pub.x * zi2), py = mod(pub.y * zi2 * zi);
+    const xB = bigToBytes(px), yB = bigToBytes(py);
+
+    const jwk = { kty: "EC", crv: "P-256",
+      d: b64u(bigToBytes(d)), x: b64u(xB), y: b64u(yB) };
+    const privateKey = await crypto.subtle.importKey("jwk", jwk, EC, false, ["deriveBits"]);
+
+    const rawPub = new Uint8Array(65);
+    rawPub[0] = 4; rawPub.set(xB, 1); rawPub.set(yB, 33);
+    const publicKey = await crypto.subtle.importKey("raw", rawPub, EC, true, []);
+    return { privateKey, publicKey, rawPub };
+  };
+
+  // ================= UI-Helfer =================
+  const setStatus = (id, msg, ok) => {
+    const el = $(id); el.textContent = msg;
+    el.className = "status " + (ok ? "ok" : "err");
+  };
+  const copyText = async (text, btn) => {
+    if (!text) return false;
+    let ok = false;
+    // 1. Moderne Clipboard-API — kann in iframes/Vorschauen blockiert sein
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {}
+    // 2. Fallback: verstecktes Textfeld + execCommand
+    if (!ok) {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.position = "fixed"; ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, text.length);
+      try { ok = document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
+    if (btn) {
+      const o = btn.textContent;
+      btn.textContent = ok ? "Kopiert ✓" : "Blockiert — s. u.";
+      setTimeout(() => btn.textContent = o, 1800);
+    }
+    return ok;
+  };
+  const shortFp = async rawPub => {
+    const h = new Uint8Array(await crypto.subtle.digest("SHA-256", rawPub));
+    return Array.from(h.slice(0, 8)).map(x => x.toString(16).padStart(2, "0")).join(":");
+  };
+  const importPub = raw => crypto.subtle.importKey("raw", raw, EC, true, []);
+
+  const deriveAes = async (privKey, pubKey, usage) => {
+    const secret = await crypto.subtle.deriveBits({ name: "ECDH", public: pubKey }, privKey, 256);
+    const hk = await crypto.subtle.importKey("raw", secret, "HKDF", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "HKDF", hash: "SHA-256", salt: new Uint8Array(32),
+        info: te.encode("ecies-p256-a256gcm-v1") },
+      hk, { name: "AES-GCM", length: 256 }, false, [usage]);
+  };
+
+  const showOwn = async () => {
+    $("inPub").value = toB64(own.rawPub);
+    $("fpOwn").innerHTML = "Fingerabdruck: <b>" + (await shortFp(own.rawPub)) + "</b> — zum Abgleich per Telefon o. ä.";
+    const box = $("wordBox"); box.innerHTML = "";
+    own.words.forEach((w, i) => {
+      const s = document.createElement("span");
+      if (i === 16) s.className = "check";
+      const n = document.createElement("i"); n.textContent = i === 16 ? "✓" : (i + 1);
+      s.appendChild(n); s.appendChild(document.createTextNode(w));
+      box.appendChild(s);
+    });
+  };
+
+  const activateSeed = async seed => {
+    const pair = await keyFromSeed(seed);
+    own = { ...pair, words: await seedToWords(seed) };
+    await showOwn();
+  };
+
+  // ================= Start =================
+  if (!window.crypto || !crypto.subtle) {
+    setStatus("stKeys", "Web Crypto API nicht verfügbar — Seite über HTTPS, localhost oder als lokale Datei öffnen.", false);
+    document.querySelectorAll("button").forEach(b => b.disabled = true);
+    return;
+  }
+  if (WORDS.length !== 256 || new Set(WORDS).size !== 256) {
+    setStatus("stKeys", "Interner Fehler: Wortliste ist beschädigt (" + WORDS.length + " Einträge, " + new Set(WORDS).size + " eindeutig).", false);
+    document.querySelectorAll("button").forEach(b => b.disabled = true);
+    return;
+  }
+
+  const freshKey = () =>
+    activateSeed(crypto.getRandomValues(new Uint8Array(16)))
+      .then(() => setStatus("stKeys", "Schlüssel bereit — Merkwörter zum Sichern aufklappen.", true))
+      .catch(e => setStatus("stKeys", "Fehler: " + e.message, false));
+
+  freshKey();
+
+  $("btnNew").addEventListener("click", freshKey);
+  $("btnCopyPub").addEventListener("click", e => copyText($("inPub").value, e.target));
+  $("btnCopyWords").addEventListener("click", async e => {
+    const text = own ? own.words.join(" ") : "";
+    const ok = await copyText(text, e.target);
+    const man = $("wordsManual");
+    if (!ok) {
+      man.style.display = "block";
+      const ta = $("taWordsPlain");
+      ta.value = text; ta.focus(); ta.select();
+    } else {
+      man.style.display = "none";
+    }
+  });
+
+  // Readonly-Felder: Klick markiert den gesamten Inhalt (erleichtert manuelles Kopieren)
+  for (const id of ["inPub", "taCipher", "taWordsPlain"]) {
+    $(id).addEventListener("focus", e => e.target.select());
+  }
+
+  $("btnRestore").addEventListener("click", () => {
+    const box = $("restoreBox");
+    box.style.display = box.style.display === "none" ? "block" : "none";
+  });
+
+  $("btnRestoreGo").addEventListener("click", async () => {
+    try {
+      const seed = await wordsToSeed($("taRestore").value);
+      await activateSeed(seed);
+      $("restoreBox").style.display = "none";
+      $("taRestore").value = "";
+      setStatus("stKeys", "Schlüssel aus Merkwörtern wiederhergestellt — Prüfwort korrekt.", true);
+    } catch (e) {
+      setStatus("stKeys", e.message, false);
+    }
+  });
+
+  // ================= Verschlüsseln =================
+  $("inRecipient").addEventListener("input", async () => {
+    const v = $("inRecipient").value.trim();
+    if (!v) { $("fpRecipient").textContent = ""; return; }
+    try {
+      const raw = fromB64(v);
+      await importPub(raw);
+      $("fpRecipient").innerHTML = "Fingerabdruck: <b>" + (await shortFp(raw)) + "</b> — mit dem Empfänger abgleichen";
+    } catch {
+      $("fpRecipient").textContent = "Kein gültiger öffentlicher Schlüssel.";
+    }
+  });
+
+  $("btnSelf").addEventListener("click", () => {
+    $("inRecipient").value = $("inPub").value;
+    $("inRecipient").dispatchEvent(new Event("input"));
+  });
+
+  $("btnEnc").addEventListener("click", async () => {
+    $("taCipher").style.display = "none"; $("metaEnc").textContent = "";
+    try {
+      const pubText = $("inRecipient").value.trim();
+      const plain = $("taPlain").value;
+      if (!pubText) throw new Error("Öffentlicher Schlüssel des Empfängers fehlt.");
+      if (!plain) throw new Error("Keine Nachricht eingegeben.");
+
+      const recipient = await importPub(fromB64(pubText)).catch(() => {
+        throw new Error("Öffentlicher Schlüssel ist ungültig.");
+      });
+
+      const eph = await crypto.subtle.generateKey(EC, true, ["deriveBits"]);
+      const aes = await deriveAes(eph.privateKey, recipient, "encrypt");
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = new Uint8Array(
+        await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aes, te.encode(plain)));
+      const ephRaw = new Uint8Array(await crypto.subtle.exportKey("raw", eph.publicKey));
+
+      const out = new Uint8Array(1 + 65 + 12 + ct.length);
+      out[0] = VERSION; out.set(ephRaw, 1); out.set(iv, 66); out.set(ct, 78);
+      const b64 = toB64(out);
+
+      $("taCipher").value = b64; $("taCipher").style.display = "block";
+      const copied = await copyText(b64, null);
+      $("metaEnc").textContent =
+        `${b64.length} Zeichen gesamt · ${te.encode(plain).length} Bytes Nachricht · 94 Bytes Overhead`;
+      setStatus("stEnc", copied
+        ? "Verschlüsselt und in die Zwischenablage kopiert."
+        : "Verschlüsselt — bitte unten manuell kopieren.", true);
+    } catch (e) {
+      setStatus("stEnc", "Fehler: " + e.message, false);
+    }
+  });
+
+  // ================= Entschlüsseln =================
+  $("btnDec").addEventListener("click", async () => {
+    $("taOut").style.display = "none"; $("lblOut").style.display = "none";
+    try {
+      if (!own) throw new Error("Kein eigener Schlüssel vorhanden.");
+      const data = fromB64($("taIn").value.trim());
+      if (data.length < 79) throw new Error("Zu kurz — das ist kein vollständiger Container.");
+      if (data[0] !== VERSION) throw new Error("Unbekannte Container-Version (" + data[0] + ").");
+
+      const ephPub = await importPub(data.slice(1, 66));
+      const iv = data.slice(66, 78);
+      const ct = data.slice(78);
+      const aes = await deriveAes(own.privateKey, ephPub, "decrypt");
+      const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, aes, ct);
+
+      $("taOut").value = td.decode(plain);
+      $("taOut").style.display = "block"; $("lblOut").style.display = "block";
+      setStatus("stDec", "Entschlüsselt — Integritätsprüfung bestanden.", true);
+    } catch (e) {
+      const msg = (e.name === "OperationError")
+        ? "Entschlüsselung fehlgeschlagen: Nachricht ist nicht an deinen Schlüssel gerichtet oder wurde verändert."
+        : (e.name === "InvalidCharacterError")
+          ? "Eingabe ist kein gültiges Base64."
+          : "Fehler: " + e.message;
+      setStatus("stDec", msg, false);
+    }
+  });
+})();
+</script>
+</body>
+</html>
