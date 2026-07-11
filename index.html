@@ -95,11 +95,9 @@
   <span class="spec">Merkwörter → HKDF → ECDH P-256 · AES-256-GCM</span>
 </header>
 
-<!-- ── Dein Schlüssel ── -->
 <section>
   <h2>Dein Schlüssel</h2>
   <p class="hint">Wird beim Öffnen automatisch erzeugt. Weitergeben: die blaue Zeile. Sichern: die roten Wörter auf Papier.</p>
-
   <div class="pubband">
     <div class="t">Öffentlicher Schlüssel — weitergeben</div>
     <div class="inline">
@@ -108,7 +106,6 @@
     </div>
     <div class="fp" id="fpOwn">Fingerabdruck: —</div>
   </div>
-
   <div class="privband">
     <div class="t">Private Merkwörter — geheim halten</div>
     <details id="detWords">
@@ -124,7 +121,6 @@
       <p class="hint" style="margin:8px 0 0">Wer diese Wörter kennt, kann alle deine Nachrichten entschlüsseln. Am besten auf Papier, nicht als Datei.</p>
     </details>
   </div>
-
   <div class="row">
     <button class="secondary" id="btnNew">Neuen Schlüssel erzeugen</button>
     <button class="secondary" id="btnRestore">Merkwörter eingeben</button>
@@ -137,64 +133,36 @@
   <div class="status err" id="stKeys">Wenn diese Meldung stehen bleibt, wurde das Script nicht ausgeführt — vermutlich zeigt eine Vorschau (z. B. die iOS-Dateivorschau) die Datei ohne JavaScript an. Die Datei in einem echten Browser öffnen.</div>
 </section>
 
-<!-- ── Verschlüsseln ── -->
 <section>
   <h2>Nachricht verschlüsseln</h2>
   <p class="hint">Öffentlichen Schlüssel des Empfängers einfügen, Nachricht schreiben. Das Ergebnis landet automatisch in der Zwischenablage.</p>
-
   <label for="inRecipient">Öffentlicher Schlüssel des Empfängers</label>
   <div class="inline">
     <input type="text" id="inRecipient" spellcheck="false" placeholder="88-Zeichen-Zeile des Empfängers …">
     <button class="small secondary" id="btnSelf" title="An dich selbst — zum Testen">An mich selbst</button>
   </div>
   <div class="fp" id="fpRecipient"></div>
-
   <label for="taPlain">Nachricht</label>
   <textarea id="taPlain" class="msg" placeholder="Zu verschlüsselnder Text …"></textarea>
-
   <div class="row"><button id="btnEnc">Verschlüsseln &amp; kopieren</button></div>
   <div class="status" id="stEnc"></div>
-
   <textarea id="taCipher" spellcheck="false" readonly style="display:none"></textarea>
   <div class="meta" id="metaEnc"></div>
-
-  <div class="divider">oder Bild / GIF / Datei</div>
-  <p class="hint">Für Bilder und GIFs wäre der Text zu lang. Stattdessen wird eine <b>PDF</b> zum Herunterladen erzeugt: Sie zeigt beim Öffnen nur einen Hinweis, trägt die verschlüsselten Daten aber im Anhang. Diese PDF lässt sich über Messenger oder Mail teilen; entschlüsselt wird sie unten wieder zum Originalbild.</p>
-  <label for="fileImg">Bild / GIF / Datei wählen (max. 20 MB)</label>
-  <input type="file" id="fileImg" accept="image/*">
-  <div class="row"><button id="btnEncFile">Als PDF verschlüsseln &amp; herunterladen</button></div>
-  <div class="status" id="stEncFile"></div>
-  <div id="dlWrap"></div>
 </section>
 
-<!-- ── Entschlüsseln ── -->
 <section>
   <h2>Nachricht entschlüsseln</h2>
   <p class="hint">Empfangene verschlüsselte Nachricht einfügen — entschlüsselt wird mit deinem Schlüssel von oben.</p>
-
   <label for="taIn">Verschlüsselte Nachricht</label>
   <textarea id="taIn" spellcheck="false" placeholder="Hier einfügen …"></textarea>
-
   <div class="row"><button id="btnDec">Entschlüsseln</button></div>
   <div class="status" id="stDec"></div>
-
   <label for="taOut" id="lblOut" style="display:none">Klartext</label>
   <textarea id="taOut" class="msg" readonly style="display:none"></textarea>
-
-  <div class="divider">oder verschlüsselte PDF / Datei</div>
-  <p class="hint">Die geteilte PDF (oder eine sonstige verschlüsselte Datei) hier auswählen. Enthält sie ein Bild, erscheint es als Vorschau mit Speichern-Link.</p>
-  <label for="fileDec">Verschlüsselte PDF / Datei wählen</label>
-  <input type="file" id="fileDec">
-  <div class="row"><button id="btnDecFile">Datei entschlüsseln</button></div>
-  <div class="status" id="stDecFile"></div>
-  <div class="imgout" id="imgOut" style="display:none">
-    <img id="imgPreview" alt="Entschlüsseltes Bild">
-    <div><a class="dl" id="imgDownload" download>Speichern</a></div>
-  </div>
 </section>
 
 <footer>
-  Ableitung: 16 Wörter kodieren 128 Bit Zufall (eigene 256er-Wortliste, <b>nicht</b> BIP39-kompatibel); Wort 17 ist eine Prüfsumme gegen Schreibfehler. Daraus per HKDF-SHA-256 der private P-256-Skalar, der öffentliche Punkt wird lokal berechnet. Nachrichten: ECIES-Schema, Container <code>version ‖ ephemerer Pubkey ‖ Nonce ‖ Chiffrat+Tag</code>, 94 Bytes Overhead. Bilder/GIFs: dasselbe Verfahren, MIME-Typ und Dateiname werden mitverschlüsselt; der Container hängt hinter <code>%%EOF</code> in einer Cover-PDF, die selbst nur einen Hinweistext zeigt. Kompatibel mit sich selbst auf allen Geräten, nicht mit PGP/age.
+  Ableitung: 16 Wörter kodieren 128 Bit Zufall (eigene 256er-Wortliste, <b>nicht</b> BIP39-kompatibel); Wort 17 ist eine Prüfsumme gegen Schreibfehler. Daraus per HKDF-SHA-256 der private P-256-Skalar, der öffentliche Punkt wird lokal berechnet. Nachrichten: ECIES-Schema, Container <code>version ‖ ephemerer Pubkey ‖ Nonce ‖ Chiffrat+Tag</code>, 94 Bytes Overhead. Kompatibel mit sich selbst auf allen Geräten, nicht mit PGP/age.
 </footer>
 
 <script>
@@ -203,10 +171,8 @@
   const $ = id => document.getElementById(id);
   const te = new TextEncoder(), td = new TextDecoder();
   const EC = { name: "ECDH", namedCurve: "P-256" };
-  const VERSION = 1;
-  let own = null; // { privateKey, publicKey, words }
+  let own = null;
 
-  // ================= Wortliste: exakt 256 eindeutige Wörter (8 Bit pro Wort) =================
   const WORDS = (
     "adler ampel anker apfel arzt ast auge axt bach ball band bank bart baum beere berg " +
     "besen bett biene bild birne blatt blitz blume boden bogen boot brief brille brot bruecke brunnen " +
@@ -226,9 +192,6 @@
     "tafel tal tanne tasse taube teich teller tiger tinte tisch topf tor traube turm vogel wald"
   ).split(" ");
 
-  // ================= P-256-Kurvenarithmetik (BigInt, Jacobi-Koordinaten) =================
-  // Nur nötig, um aus dem abgeleiteten Skalar den öffentlichen Punkt zu berechnen —
-  // Web Crypto kann EC-Privatschlüssel nicht ohne Punktkoordinaten importieren.
   const P  = 2n**256n - 2n**224n + 2n**192n + 2n**96n - 1n;
   const A  = P - 3n;
   const N  = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
@@ -280,7 +243,6 @@
     return res;
   };
 
-  // ================= Byte-/Base64-Helfer =================
   const toB64 = buf => {
     const b = new Uint8Array(buf); let s = "";
     for (let i = 0; i < b.length; i += 0x8000)
@@ -305,7 +267,6 @@
     return n;
   };
 
-  // ================= Merkwörter ↔ Seed =================
   const seedToWords = async seed => {
     const idx = Array.from(seed);
     const chk = new Uint8Array(await crypto.subtle.digest("SHA-256", seed))[0];
@@ -327,19 +288,23 @@
     return seed;
   };
 
-  // ================= Seed → Schlüsselpaar (deterministisch) =================
+  const hmacKey = raw =>
+    crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const hkdf32 = async (ikm, infoStr) => {
+    const prk = await crypto.subtle.sign("HMAC", await hmacKey(new Uint8Array(32)), ikm);
+    const info = te.encode(infoStr);
+    const t = new Uint8Array(info.length + 1);
+    t.set(info, 0); t[info.length] = 1;
+    return new Uint8Array(await crypto.subtle.sign("HMAC", await hmacKey(prk), t));
+  };
+
   const keyFromSeed = async seed => {
-    // 128-Bit-Seed → 256-Bit-Skalar via HKDF (HMAC-basiert, s. o.)
     const bits = await hkdf32(seed, "p256-mnemonic-scalar-v1");
     const d = mod(bytesToBig(bits), N - 1n) + 1n;
-
-    // Öffentlichen Punkt d·G berechnen
     const pub = mul(d, { x: GX, y: GY, z: 1n });
     const zi = inv(pub.z), zi2 = mod(zi * zi);
     const px = mod(pub.x * zi2), py = mod(pub.y * zi2 * zi);
     const xB = bigToBytes(px), yB = bigToBytes(py);
-
-    // JWK-Import: WebKit validiert strenger als Chromium — Varianten durchprobieren
     const jwkBase = { kty: "EC", crv: "P-256",
       d: b64u(bigToBytes(d)), x: b64u(xB), y: b64u(yB) };
     const variants = [
@@ -356,15 +321,12 @@
     }
     if (!privateKey)
       throw new Error("[JWK-Import] " + ((lastErr && (lastErr.message || lastErr.name)) || "fehlgeschlagen"));
-
     const rawPub = new Uint8Array(65);
     rawPub[0] = 4; rawPub.set(xB, 1); rawPub.set(yB, 33);
-    const publicKey = await step("Pubkey-Import",
-      crypto.subtle.importKey("raw", rawPub, EC, true, []));
+    const publicKey = await crypto.subtle.importKey("raw", rawPub, EC, true, []);
     return { privateKey, publicKey, rawPub };
   };
 
-  // ================= UI-Helfer =================
   const setStatus = (id, msg, ok) => {
     const el = $(id); el.textContent = msg;
     el.className = "status " + (ok ? "ok" : "err");
@@ -372,9 +334,7 @@
   const copyText = async (text, btn) => {
     if (!text) return false;
     let ok = false;
-    // 1. Moderne Clipboard-API — kann in iframes/Vorschauen blockiert sein
     try { await navigator.clipboard.writeText(text); ok = true; } catch {}
-    // 2. Fallback: verstecktes Textfeld + execCommand
     if (!ok) {
       const ta = document.createElement("textarea");
       ta.value = text; ta.setAttribute("readonly", "");
@@ -397,29 +357,13 @@
   };
   const importPub = raw => crypto.subtle.importKey("raw", raw, EC, true, []);
 
-  // HKDF-SHA-256 (RFC 5869) manuell über HMAC — natives "HKDF" fehlt/zickt in manchen
-  // WebKit-Versionen. Ausgabe ist bitidentisch zur nativen Variante (Salt = 32 Nullbytes).
-  const hmacKey = raw =>
-    crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const hkdf32 = async (ikm, infoStr) => {
-    const prk = await crypto.subtle.sign("HMAC", await hmacKey(new Uint8Array(32)), ikm);
-    const info = te.encode(infoStr);
-    const t = new Uint8Array(info.length + 1);
-    t.set(info, 0); t[info.length] = 1;
-    return new Uint8Array(await crypto.subtle.sign("HMAC", await hmacKey(prk), t));
-  };
-
   const deriveAes = async (privKey, pubKey, usage) => {
-    const secret = await step("ECDH",
-      crypto.subtle.deriveBits({ name: "ECDH", public: pubKey }, privKey, 256));
+    const secret = await crypto.subtle.deriveBits({ name: "ECDH", public: pubKey }, privKey, 256);
     const bits = await hkdf32(new Uint8Array(secret), "ecies-p256-a256gcm-v1");
-    return step("AES-Import",
-      crypto.subtle.importKey("raw", bits, { name: "AES-GCM" }, false, [usage]));
+    return crypto.subtle.importKey("raw", bits, { name: "AES-GCM" }, false, [usage]);
   };
 
-  // ========== ECIES verpacken/auspacken (versioniert) ==========
-  // Container: version(1) ‖ ephemerer Pubkey(65) ‖ Nonce(12) ‖ AES-GCM-Chiffrat+Tag
-  const seal = async (recipientPub, plainBytes, version) => {
+  const seal = async (recipientPub, plainBytes) => {
     const eph = await crypto.subtle.generateKey(EC, true, ["deriveBits"]);
     const aes = await deriveAes(eph.privateKey, recipientPub, "encrypt");
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -427,7 +371,7 @@
       await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aes, plainBytes));
     const ephRaw = new Uint8Array(await crypto.subtle.exportKey("raw", eph.publicKey));
     const out = new Uint8Array(78 + ct.length);
-    out[0] = version; out.set(ephRaw, 1); out.set(iv, 66); out.set(ct, 78);
+    out[0] = 1; out.set(ephRaw, 1); out.set(iv, 66); out.set(ct, 78);
     return out;
   };
   const openContainer = async data => {
@@ -439,88 +383,6 @@
       await crypto.subtle.decrypt({ name: "AES-GCM", iv: data.slice(66, 78) }, aes, data.slice(78)));
     return { version, plain };
   };
-
-  // ========== Datei-Bündel: MIME + Name + Bytes (wird mitverschlüsselt) ==========
-  const buildBundle = (mime, name, bytes) => {
-    const m = te.encode(mime), n = te.encode(name);
-    const out = new Uint8Array(2 + m.length + 2 + n.length + bytes.length);
-    let o = 0;
-    out[o++] = m.length >> 8; out[o++] = m.length & 255; out.set(m, o); o += m.length;
-    out[o++] = n.length >> 8; out[o++] = n.length & 255; out.set(n, o); o += n.length;
-    out.set(bytes, o);
-    return out;
-  };
-  const parseBundle = p => {
-    let o = 0;
-    const ml = (p[o] << 8) | p[o + 1]; o += 2;
-    const mime = td.decode(p.slice(o, o + ml)); o += ml;
-    const nl = (p[o] << 8) | p[o + 1]; o += 2;
-    const name = td.decode(p.slice(o, o + nl)); o += nl;
-    return { mime, name, bytes: p.slice(o) };
-  };
-
-  // ========== Cover-PDF (nur ASCII) mit angehängter Nutzlast ==========
-  const PDF_MARKER = te.encode("\n%%ENC1%%\n"); // trennt Cover von Container
-  const buildCoverPdf = () => {
-    const lines = [
-      "Verschluesselte Datei",
-      "",
-      "Diese PDF enthaelt verschluesselte Daten im Anhang.",
-      "Zum Entschluesseln im Verschluesselungs-Tool unter",
-      "'Datei entschluesseln' oeffnen.",
-      "",
-      "Ohne den passenden privaten Schluessel bleibt der",
-      "Inhalt unlesbar.",
-    ];
-    let content = "BT /F1 15 Tf 60 770 Td 20 TL\n";
-    for (const ln of lines) content += `(${ln.replace(/([()\\])/g, "\\$1")}) Tj T*\n`;
-    content += "ET";
-    const objs = [
-      "<</Type/Catalog/Pages 2 0 R>>",
-      "<</Type/Pages/Kids[3 0 R]/Count 1>>",
-      "<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>",
-      "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>",
-      `<</Length ${content.length}>>\nstream\n${content}\nendstream`,
-    ];
-    let pdf = "%PDF-1.4\n";
-    const offsets = [];
-    objs.forEach((body, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${body}\nendobj\n`; });
-    const xrefStart = pdf.length;
-    pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
-    offsets.forEach(o => { pdf += String(o).padStart(10, "0") + " 00000 n \n"; });
-    pdf += `trailer\n<</Size ${objs.length + 1}/Root 1 0 R>>\nstartxref\n${xrefStart}\n%%EOF`;
-    return te.encode(pdf); // reines ASCII → Byte-Offsets == String-Länge
-  };
-  const wrapPdf = container => {
-    const cover = buildCoverPdf();
-    const out = new Uint8Array(cover.length + PDF_MARKER.length + container.length);
-    out.set(cover, 0); out.set(PDF_MARKER, cover.length);
-    out.set(container, cover.length + PDF_MARKER.length);
-    return out;
-  };
-  const extractContainer = fileBytes => {
-    const m = PDF_MARKER;
-    for (let i = fileBytes.length - m.length; i >= 0; i--) {
-      let hit = true;
-      for (let j = 0; j < m.length; j++) if (fileBytes[i + j] !== m[j]) { hit = false; break; }
-      if (hit) return fileBytes.slice(i + m.length);
-    }
-    return fileBytes; // keine Markierung → ganze Datei ist der Container
-  };
-
-  const triggerDownload = (bytes, name, mime) => {
-    const url = URL.createObjectURL(new Blob([bytes], { type: mime || "application/octet-stream" }));
-    const a = document.createElement("a");
-    a.href = url; a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    return url;
-  };
-
-  // Fehler mit Schrittnamen versehen — macht Plattformprobleme diagnostizierbar
-  const step = (name, promise) => promise.catch(e => {
-    throw new Error("[" + name + "] " + (e && e.message ? e.message : e && e.name ? e.name : "unbekannter Fehler"));
-  });
 
   const showOwn = async () => {
     $("inPub").value = toB64(own.rawPub);
@@ -541,14 +403,13 @@
     await showOwn();
   };
 
-  // ================= Start =================
   if (!window.crypto || !crypto.subtle) {
     setStatus("stKeys", "Web Crypto API nicht verfügbar — Seite über HTTPS, localhost oder als lokale Datei öffnen.", false);
     document.querySelectorAll("button").forEach(b => b.disabled = true);
     return;
   }
   if (WORDS.length !== 256 || new Set(WORDS).size !== 256) {
-    setStatus("stKeys", "Interner Fehler: Wortliste ist beschädigt (" + WORDS.length + " Einträge, " + new Set(WORDS).size + " eindeutig).", false);
+    setStatus("stKeys", "Interner Fehler: Wortliste ist beschädigt.", false);
     document.querySelectorAll("button").forEach(b => b.disabled = true);
     return;
   }
@@ -575,9 +436,9 @@
     }
   });
 
-  // Readonly-Felder: Klick markiert den gesamten Inhalt (erleichtert manuelles Kopieren)
   for (const id of ["inPub", "taCipher", "taWordsPlain"]) {
-    $(id).addEventListener("focus", e => e.target.select());
+    const el = $(id);
+    if (el) el.addEventListener("focus", e => e.target.select());
   }
 
   $("btnRestore").addEventListener("click", () => {
@@ -597,7 +458,6 @@
     }
   });
 
-  // ================= Verschlüsseln =================
   $("inRecipient").addEventListener("input", async () => {
     const v = $("inRecipient").value.trim();
     if (!v) { $("fpRecipient").textContent = ""; return; }
@@ -616,115 +476,36 @@
   });
 
   $("btnEnc").addEventListener("click", async () => {
-    $("taCipher").style.display = "none"; $("metaEnc").textContent = "";
+    $("taCipher").style.display = "none";
     try {
       const pubText = $("inRecipient").value.trim();
       const plain = $("taPlain").value;
       if (!pubText) throw new Error("Öffentlicher Schlüssel des Empfängers fehlt.");
       if (!plain) throw new Error("Keine Nachricht eingegeben.");
-
       const recipient = await importPub(fromB64(pubText)).catch(() => {
         throw new Error("Öffentlicher Schlüssel ist ungültig.");
       });
-      const b64 = toB64(await seal(recipient, te.encode(plain), 1));
-
+      const b64 = toB64(await seal(recipient, te.encode(plain)));
       $("taCipher").value = b64; $("taCipher").style.display = "block";
       const copied = await copyText(b64, null);
-      $("metaEnc").textContent =
-        `${b64.length} Zeichen gesamt · ${te.encode(plain).length} Bytes Nachricht · 94 Bytes Overhead`;
-      setStatus("stEnc", copied
-        ? "Verschlüsselt und in die Zwischenablage kopiert."
-        : "Verschlüsselt — bitte unten manuell kopieren.", true);
+      $("metaEnc").textContent = `${b64.length} Zeichen`;
+      setStatus("stEnc", copied ? "Verschlüsselt und kopiert ✓" : "Verschlüsselt — manuell kopieren", true);
     } catch (e) {
       setStatus("stEnc", "Fehler: " + e.message, false);
     }
   });
 
-  // ================= Bild / GIF / Datei → verschlüsselte PDF =================
-  $("btnEncFile").addEventListener("click", async () => {
-    $("dlWrap").innerHTML = "";
-    try {
-      const pubText = $("inRecipient").value.trim();
-      if (!pubText) throw new Error("Öffentlicher Schlüssel des Empfängers fehlt.");
-      const f = $("fileImg").files[0];
-      if (!f) throw new Error("Keine Datei gewählt.");
-      if (f.size > 20 * 1024 * 1024) throw new Error("Datei größer als 20 MB — dafür ist dieses Verfahren nicht gedacht.");
-
-      const recipient = await importPub(fromB64(pubText)).catch(() => {
-        throw new Error("Öffentlicher Schlüssel ist ungültig.");
-      });
-      setStatus("stEncFile", "Verschlüssle …", true);
-      const bytes = new Uint8Array(await f.arrayBuffer());
-      const bundle = buildBundle(f.type || "application/octet-stream", f.name, bytes);
-      const container = await seal(recipient, bundle, 2);
-      const pdf = wrapPdf(container);
-
-      const outName = "verschluesselt-" + f.name.replace(/\.[^.]+$/, "") + ".pdf";
-      const url = triggerDownload(pdf, outName, "application/pdf");
-      // Sichtbarer Link als Fallback (iOS lädt programmatisch oft nicht automatisch)
-      $("dlWrap").innerHTML =
-        `<a class="dl" href="${url}" download="${outName}">PDF speichern / teilen (${(pdf.length / 1024).toFixed(0)} KB)</a>`;
-      setStatus("stEncFile",
-        "Verschlüsselt. Falls kein Download startet (z. B. iPhone): Link antippen, dann über „Teilen" sichern.", true);
-    } catch (e) {
-      setStatus("stEncFile", "Fehler: " + e.message, false);
-    }
-  });
-
-  // ================= Entschlüsseln =================
-  // Ergebnis anzeigen — je nach Container-Version Text (1) oder Datei/Bild (2)
-  const showResult = ({ version, plain }, statusId) => {
-    if (version === 1) {
-      $("taOut").value = td.decode(plain);
-      $("taOut").style.display = "block"; $("lblOut").style.display = "block";
-      setStatus(statusId, "Entschlüsselt — Textnachricht (siehe Feld „Klartext").", true);
-    } else if (version === 2) {
-      const { mime, name, bytes } = parseBundle(plain);
-      const url = URL.createObjectURL(new Blob([bytes], { type: mime || "application/octet-stream" }));
-      const img = $("imgPreview");
-      if (mime.startsWith("image/")) { img.src = url; img.style.display = ""; }
-      else { img.style.display = "none"; }
-      const a = $("imgDownload");
-      a.href = url; a.download = name;
-      a.textContent = "„" + name + "" speichern";
-      $("imgOut").style.display = "block";
-      setStatus(statusId, `Entschlüsselt — ${name} (${(bytes.length / 1024).toFixed(0)} KB).`, true);
-    } else {
-      throw new Error("Unbekannte Container-Version (" + version + ").");
-    }
-  };
-  const mapDecError = e =>
-    (e.name === "OperationError")
-      ? "Entschlüsselung fehlgeschlagen: nicht an deinen Schlüssel gerichtet oder verändert."
-      : (e.name === "InvalidCharacterError")
-        ? "Eingabe ist kein gültiges Base64."
-        : "Fehler: " + e.message;
-
   $("btnDec").addEventListener("click", async () => {
     $("taOut").style.display = "none"; $("lblOut").style.display = "none";
-    $("imgOut").style.display = "none";
     try {
       if (!own) throw new Error("Kein eigener Schlüssel vorhanden.");
       const data = fromB64($("taIn").value.trim());
-      showResult(await openContainer(data), "stDec");
+      const result = await openContainer(data);
+      $("taOut").value = td.decode(result.plain);
+      $("taOut").style.display = "block"; $("lblOut").style.display = "block";
+      setStatus("stDec", "Entschlüsselt ✓", true);
     } catch (e) {
-      setStatus("stDec", mapDecError(e), false);
-    }
-  });
-
-  $("btnDecFile").addEventListener("click", async () => {
-    $("imgOut").style.display = "none";
-    $("taOut").style.display = "none"; $("lblOut").style.display = "none";
-    try {
-      if (!own) throw new Error("Kein eigener Schlüssel vorhanden.");
-      const f = $("fileDec").files[0];
-      if (!f) throw new Error("Keine Datei gewählt.");
-      setStatus("stDecFile", "Lese und entschlüssle …", true);
-      const fileBytes = new Uint8Array(await f.arrayBuffer());
-      const container = extractContainer(fileBytes);
-      showResult(await openContainer(container), "stDecFile");
-    } catch (e) {
-      setStatus("stDecFile", mapDecError(e), false);
+      setStatus("stDec", "Fehler: " + (e.name === "OperationError" ? "Nicht an deinen Schlüssel gerichtet." : e.message), false);
     }
   });
 })();
